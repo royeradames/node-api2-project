@@ -10,14 +10,19 @@ router.get('/', async (req, res) => {
         })
     res.status(200).json(posts)
 })
-router.get('/:id', async (req, res) => {
+router.get('/:id', (req, res) => {
     const id = Number(req.params.id)
-    let post
-    await db.findById(id)
-        .then(resp => {
-            post = resp
+    db.findById(id)
+        .then(post => {
+            const isPostFound = post.length > 0
+            if (!isPostFound) {
+                res.status(404).json({ message: "The post with the specified ID does not exist." })
+            } else {
+                res.status(200).json(post)
+            }
         })
-    res.status(200).json(post)
+
+
 })
 
 router.post('/', async (req, res) => {
@@ -103,34 +108,46 @@ router.delete('/:id', async (req, res) => {
 })
 
 // having trouble understanding how comments and posts are jointing
-router.get('/api/posts/:id/comments', async (req, res) => {
-    const id = Number(req.params.id)
-    let comments
-    await db.findPostComments(id)
-        .then(resp => {
-            comments = resp
-        })
-    res.status(200).json(comments)
+router.get('/:id/comments', (req, res) => {
+    try {
+        const id = Number(req.params.id)
+        db.findCommentById(id)
+            .then(comments => {
+                const noComments = comments.length === 0
+
+                if (noComments) res.status(404).json({ message: "The post with the specified ID does not exist or there is no comments." })
+
+                res.status(200).json(comments)
+
+            })
+
+    } catch (error) {
+        res.status(500).json({ error: "The comments information could not be retrieved." })
+
+    }
+
 })
-router.post('/:id/comments', async (req, res) => {
+router.post('/:id/comments', (req, res) => {
     try {
         //id not found return 404 { message: "The post with the specified ID does not exist." }
         const id = req.params.id
         let idIsFound
-        await db.findById(id)
+        db.findById(id)
             .then(resp => {
                 // If the request body is missing the text property
                 // 400 { errorMessage: "Please provide text for the comment." }
                 const newComment = {
-                    text: req.body.text,
-                    post_id: req.body.post_id
+                    text: String(req.body.text),
+                    post_id: String(req.body.post_id)
                 }
                 if (!newComment.text) res.status(400).json({ errorMessage: "Please provide text for the comment." })
 
                 // If the information about the comment is valid: 
                 // 201 return the newly created comment.
-
-                res.status(201).json(db.insertComment(newComment))
+                db.insertComment(newComment)
+                    .then( (updatedComment) => {
+                        res.status(201).json(updatedComment)
+                    })
             })
             .catch(() => {
                 res.status(404).json({ message: "The post with the specified ID does not exist." })
