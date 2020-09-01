@@ -6,7 +6,7 @@
 - Reading Request data from body and URL parameters
 - Sub-routes
 - API design and development.
-
+ 
 ## Introduction
 
 Use `Node.js` and `Express` to build an API that performs _CRUD_ operations on `blog posts`.
