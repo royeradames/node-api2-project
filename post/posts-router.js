@@ -19,8 +19,8 @@ router.get('/:id', (req, res) => {
         const id = Number(req.params.id)
         db.findById(id)
             .then(post => {
-                const isPostFound = post.length > 0
-                if (!isPostFound) {
+                const isPostNotFound = !(post.length > 0)
+                if (isPostNotFound) {
                     res.status(404).json({ message: "The post with the specified ID does not exist." })
                 } else {
                     res.status(200).json(post)
@@ -104,9 +104,9 @@ router.delete('/:id', async (req, res) => {
         db.remove(id)
             .then((resp) => {
                 console.log(resp)
-                if(resp === 0) 
-                res.status(404).json({ message: "The post with the specified ID does not exist." })
-                
+                if (resp === 0)
+                    res.status(404).json({ message: "The post with the specified ID does not exist." })
+
                 res.status(204).end()
             })
     } catch (error) {
@@ -116,13 +116,15 @@ router.delete('/:id', async (req, res) => {
 })
 
 // having trouble understanding how comments and posts are jointing
-router.get('/:id/comments', (req, res) => {
+router.get('/:id/comments', async (req, res) => {
     try {
         const id = Number(req.params.id)
+        // get all of the post comments
         db.findPostComments(id)
             .then(comments => {
                 const noComments = comments.length === 0
 
+                // if there is no id that matches then return an error
                 if (noComments) res.status(404).json({ message: "The post with the specified ID does not exist or there is no comments." })
 
                 res.status(200).json(comments)
@@ -160,7 +162,7 @@ router.post('/:id/comments', async (req, res) => {
         db.insertComment(newComment)
             .then((commentIdObject) => {
                 db.findCommentById(commentIdObject.id)
-                    .then( updatedComment => {
+                    .then(updatedComment => {
                         res.status(201).json(updatedComment)
                     })
             })
