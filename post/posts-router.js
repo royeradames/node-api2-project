@@ -111,7 +111,7 @@ router.delete('/:id', async (req, res) => {
 router.get('/:id/comments', (req, res) => {
     try {
         const id = Number(req.params.id)
-        db.findCommentById(id)
+        db.findPostComments(id)
             .then(comments => {
                 const noComments = comments.length === 0
 
@@ -127,35 +127,36 @@ router.get('/:id/comments', (req, res) => {
     }
 
 })
-router.post('/:id/comments', (req, res) => {
+router.post('/:id/comments', async (req, res) => {
     try {
         //id not found return 404 { message: "The post with the specified ID does not exist." }
-        const id = req.params.id
-        let idIsFound
-        db.findById(id)
-            .then(resp => {
-                // If the request body is missing the text property
-                // 400 { errorMessage: "Please provide text for the comment." }
-                const newComment = {
-                    text: String(req.body.text),
-                    post_id: String(req.body.post_id)
-                }
-                if (!newComment.text) res.status(400).json({ errorMessage: "Please provide text for the comment." })
+        const id = Number(req.params.id)
+        await db.findById(id)
+        .then(post => {
+            const isPostFound = post.length > 0
+            if (!isPostFound) {
+                res.status(404).json({ message: "The post with the specified ID does not exist." })
+            } 
+        })
 
-                // If the information about the comment is valid: 
-                // 201 return the newly created comment.
-                db.insertComment(newComment)
-                    .then( (updatedComment) => {
+        // If the request body is missing the text property
+        // 400 { errorMessage: "Please provide text for the comment." }
+        const newComment = {
+            text: String(req.body.text),
+            post_id: String(req.body.post_id),
+        }
+        if (!newComment.text) res.status(400).json({ errorMessage: "Please provide text for the comment." })
+        // If the information about the comment is valid: 
+        // 201 return the newly created comment.
+        db.insertComment(newComment)
+            .then((comment) => {
+                console.log(comment)
+                db.findCommentById(comment.id)
+                    .then((updatedComment) => {
+                        console.log(updatedComment)
                         res.status(201).json(updatedComment)
                     })
             })
-            .catch(() => {
-                res.status(404).json({ message: "The post with the specified ID does not exist." })
-            })
-
-
-
-
 
     } catch (error) {
         res.status(500).json({ error: "There was an error while saving the comment to the database" })
