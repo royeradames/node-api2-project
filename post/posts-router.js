@@ -7,7 +7,6 @@ router.get('/', (req, res) => {
         db.find()
             .then(posts => {
                 res.status(200).json(posts)
-
             })
     } catch (error) {
         res.status(500).json({ error: "The posts information could not be retrieved." })
@@ -28,7 +27,7 @@ router.get('/:id', (req, res) => {
                 }
             })
     } catch (error) {
-        res.status(500).json({error: "The post information could not be retrieved."})
+        res.status(500).json({ error: "The post information could not be retrieved." })
 
     }
 
@@ -103,15 +102,15 @@ router.delete('/:id', async (req, res) => {
     try {
         const id = Number(req.params.id)
         db.remove(id)
-            .then(() => {
+            .then((resp) => {
+                console.log(resp)
+                if(resp === 0) 
+                res.status(404).json({ message: "The post with the specified ID does not exist." })
+                
                 res.status(204).end()
             })
-            .catch(() => {
-                res.status(400).json({ error: "The post could not be removed" })
-
-            })
     } catch (error) {
-        res.status(500).json({ error: "The comments information could not be retrieved." })
+        res.status(500).json({ error: "The post could not be removed" })
 
     }
 })
@@ -155,14 +154,13 @@ router.post('/:id/comments', async (req, res) => {
             post_id: String(req.body.post_id),
         }
         if (!newComment.text) res.status(400).json({ errorMessage: "Please provide text for the comment." })
+
         // If the information about the comment is valid: 
         // 201 return the newly created comment.
         db.insertComment(newComment)
-            .then((comment) => {
-                console.log(comment)
-                db.findCommentById(comment.id)
-                    .then((updatedComment) => {
-                        console.log(updatedComment)
+            .then((commentIdObject) => {
+                db.findCommentById(commentIdObject.id)
+                    .then( updatedComment => {
                         res.status(201).json(updatedComment)
                     })
             })
