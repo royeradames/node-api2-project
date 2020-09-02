@@ -2,26 +2,35 @@ const express = require('express')
 var db = require('../data/db')
 const router = express.Router()
 // '/api/post' + 'router url from here' 
-router.get('/', async (req, res) => {
-    let posts
-    await db.find()
-        .then(resp => {
-            posts = resp
-        })
-    res.status(200).json(posts)
+router.get('/', (req, res) => {
+    try {
+        db.find()
+            .then(posts => {
+                res.status(200).json(posts)
+
+            })
+    } catch (error) {
+        res.status(500).json({ error: "The posts information could not be retrieved." })
+
+    }
 })
 router.get('/:id', (req, res) => {
-    const id = Number(req.params.id)
-    db.findById(id)
-        .then(post => {
-            const isPostFound = post.length > 0
-            if (!isPostFound) {
-                res.status(404).json({ message: "The post with the specified ID does not exist." })
-            } else {
-                res.status(200).json(post)
-            }
-        })
 
+    try {
+        const id = Number(req.params.id)
+        db.findById(id)
+            .then(post => {
+                const isPostFound = post.length > 0
+                if (!isPostFound) {
+                    res.status(404).json({ message: "The post with the specified ID does not exist." })
+                } else {
+                    res.status(200).json(post)
+                }
+            })
+    } catch (error) {
+        res.status(500).json({error: "The post information could not be retrieved."})
+
+    }
 
 })
 
@@ -132,12 +141,12 @@ router.post('/:id/comments', async (req, res) => {
         //id not found return 404 { message: "The post with the specified ID does not exist." }
         const id = Number(req.params.id)
         await db.findById(id)
-        .then(post => {
-            const isPostFound = post.length > 0
-            if (!isPostFound) {
-                res.status(404).json({ message: "The post with the specified ID does not exist." })
-            } 
-        })
+            .then(post => {
+                const isPostFound = post.length > 0
+                if (!isPostFound) {
+                    res.status(404).json({ message: "The post with the specified ID does not exist." })
+                }
+            })
 
         // If the request body is missing the text property
         // 400 { errorMessage: "Please provide text for the comment." }
