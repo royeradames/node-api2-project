@@ -4,7 +4,7 @@
 //this is pulling the dependency from 'node_modules' now, instead of the stdlib
 const express = require('express')
 var cors = require('cors')
-const port = 8080
+const port = process.env.PORT || 8080
 
 const postRouter = require('./post/posts-router')
 //creates a new express server
